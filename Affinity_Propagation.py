@@ -1,3 +1,4 @@
+import time
 import numpy as np
 import pandas as pd
 from scipy.spatial import ConvexHull
@@ -5,10 +6,14 @@ from sklearn.cluster import KMeans
 from sklearn.cluster import AffinityPropagation
 from sklearn.metrics import silhouette_score
 
+# Iniciar el temporizador
+start_time = time.time()
+
 def leer_y_preprocesar_dataset(file_path):
     data_read = pd.read_csv(file_path)
     data_read = data_read.drop(['Cluster', 'x_cen', 'y_cen'], axis=1)
     data_read = data_read.dropna()
+
     return data_read
 
 def calcular_diagonal_y_area_minima(data_selected):
@@ -18,10 +23,9 @@ def calcular_diagonal_y_area_minima(data_selected):
     diagonal_min = diagonales[index_min_diagonal]
 
     x_min, y_min = [x1[index_min_diagonal], x3[index_min_diagonal]], [y1[index_min_diagonal], y3[index_min_diagonal]]
-    print("Indice del cuadrante:", index_min_diagonal, "(x1 ; y1):", x1[index_min_diagonal], y1[index_min_diagonal],
-          "(x3 ; y3):", x3[index_min_diagonal], y3[index_min_diagonal], "con diagonal:", diagonal_min)
+    #print("Indice del cuadrante:", index_min_diagonal, "(x1 ; y1):", x1[index_min_diagonal], y1[index_min_diagonal],"(x3 ; y3):", x3[index_min_diagonal], y3[index_min_diagonal], "con diagonal:", diagonal_min)
     min_parq = (max(x_min) - min(x_min)) * (max(y_min) - min(y_min))
-    print("Área de mínimo estacionamiento posible:", min_parq)
+    #print("Area de minimo estacionamiento posible:", min_parq)
     return index_min_diagonal, min_parq
 
 def crear_lista_puntos( data_read ):
@@ -45,7 +49,7 @@ def crear_lista_puntos( data_read ):
 def calcular_area_maxima_posible(points):
     hull = ConvexHull(points)
     area_max_posible = hull.volume
-    print("Área envolvente convexa:", area_max_posible)
+    #print("Area envolvente convexa:", area_max_posible)
     return area_max_posible
 
 def analisis_silueta(data_selected, k_values):
@@ -63,28 +67,28 @@ def analisis_silueta(data_selected, k_values):
     indice_max_valor = silhouette_scores.index(max_numero_slhouette)
     max_numero_clusters = k_values[indice_max_valor]
 
-    print(f"El máximo valor de silhouette_scores es: {max_numero_slhouette}")
-    print(f"El número de clusters necesarios es: {max_numero_clusters}")
+    #print("El maximo valor de silhouette_scores es:" ,max_numero_slhouette)
+    #print("El numero de clusters necesarios es:", max_numero_clusters)
     return sum_of_squared_distances, silhouette_scores, max_numero_clusters
 
-def clusterizar_csv(nombre_archivo_csv, num_cluster, columnas, data_selected):
+def clusterizar_csv(nombre_archivo_csv, max_numero_clusters, columnas, data_selected):
     df_seleccionado = data_selected[columnas + ['nombre_imagen']]
 
-    affinity_propagation = AffinityPropagation(affinity='euclidean', max_iter=200)
-    clusters = affinity_propagation.fit_predict(data_selected)
+    affinity_propagation = AffinityPropagation(affinity='euclidean', max_iter=max_numero_clusters)
+    clusters = affinity_propagation.fit_predict(df_seleccionado[columnas])
 
     df_seleccionado['cluster'] = clusters
 
-    nuevo_nombre_archivo_csv = 'dataset/datos_clusterizados_OPTICS.csv'
+    nuevo_nombre_archivo_csv = 'dataset/datos_clusterizados_Affinity_Propagation.csv'
     df_seleccionado.to_csv(nuevo_nombre_archivo_csv, index=False)
 
-    print(f"El archivo '{nuevo_nombre_archivo_csv}' ha sido creado exitosamente con las columnas {columnas}, nombre_imagen y cluster.")
+    #print("El archivo ha sido creado exitosamente", nuevo_nombre_archivo_csv)
     df_seleccionado = df_seleccionado[columnas]
     return df_seleccionado, clusters
 
 
 
-# Uso de las funciones
+# # Uso de las funciones
 file_path = 'dataset/labeled_park_coords.csv'
 data_read = leer_y_preprocesar_dataset(file_path)
 
@@ -100,3 +104,10 @@ sum_of_squared_distances, silhouette_scores, max_numero_clusters = analisis_silu
 nombre_archivo_csv = 'datos.csv'
 columnas = ['x1', 'y1', 'x2', 'y2', 'x3', 'y3', 'x4', 'y4']
 nuevos_datos, clusters = clusterizar_csv(nombre_archivo_csv, max_numero_clusters, columnas, data_read)
+
+# Detener el temporizador
+end_time = time.time()
+
+# Obtener el tiempo de ejecución
+execution_time = end_time - start_time
+print("Tiempo de ejecución en segundos:", execution_time)
