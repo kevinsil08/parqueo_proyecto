@@ -59,7 +59,7 @@ def analisis_silueta(data_selected, k_values):
     silhouette_scores = []
 
     for k in k_values:
-        kmeans = KMeans(n_clusters=k)
+        kmeans = KMeans(n_clusters=k, n_init=10)
         kmeans.fit(parking_data)
         sum_of_squared_distances.append(kmeans.inertia_)
         silhouette_scores.append(silhouette_score(parking_data, kmeans.labels_))
